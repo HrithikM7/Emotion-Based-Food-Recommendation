@@ -16,15 +16,17 @@ from PIL import Image
 import pickle
 from pathlib import Path
 import streamlit_authenticator
-import mysql.connector
 
-#Database connection
-conn = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    passwd="Ashri@2003",
-    database="pets"
-)
+streamlit_style = """
+            <style>
+            @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap');
+            html, body, [class*="css"]  {
+            font-family: 'Georgia', sans-serif;
+            }
+            </style>
+            """
+
+st.markdown(streamlit_style, unsafe_allow_html=True)
 
 #Authentication 
 
@@ -61,7 +63,7 @@ if authentication_status == None:
 
 if authentication_status : 
     st.title("🍔 EMOTION-BASED FOOD RECOMMENDATION SYSTEM")
-    menu = ["🏠 Home","🍞 Food","🙍 Patient"]
+    menu = ["🏠 Home","🍞 Food","🙍 Information"]
 
     authenticator.logout("Logout", "sidebar")
     st.sidebar.title(f"Welcome {name}")
@@ -74,7 +76,7 @@ if authentication_status :
 
     if choice == "🍞 Food":
         st.subheader("HELLO!")
-        menu1 = ["Emotion-based Food Recommendation"] #"Informative Plots"
+        menu1 = ["Emotion-based Food Recommendation"] 
         ch = st.selectbox("Select an option",menu1)
         st.text("")
         if ch == "Emotion-based Food Recommendation":
@@ -101,21 +103,63 @@ if authentication_status :
                 Generate_pred = st.button("Generate Prediction")    
                 if Generate_pred:
                     faces= faceDetect.detectMultiScale(gray, 1.3, 3)
-                    for x,y,w,h in faces:
-                        sub_face_img=gray[y:y+h, x:x+w]
-                        resized=cv2.resize(sub_face_img,(48,48))
-                        normalize=resized/255.0
-                        reshaped=np.reshape(normalize, (1, 48, 48, 1))
-                        result=model.predict(reshaped)
-                        label=np.argmax(result, axis=1)[0]
-                        # prediction = model.predict(img_reshape).argmax()
-                        st.title("Predicted label for the image is {}".format(map_dict [label]))
-                        st.text("")
-if choice == "🙍 Patient":
-    st.subheader("DATABASE")
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM mytable")
-    results = cursor.fetchall()
-    st.markdown(results)
-conn.close()
+                    x,y,w,h = faces[0]
+                    # for x,y,w,h in faces[0][0]:
+                    sub_face_img=gray[y:y+h, x:x+w]
+                    resized=cv2.resize(sub_face_img,(48,48))
+                    normalize=resized/255.0
+                    reshaped=np.reshape(normalize, (1, 48, 48, 1))
+                    result=model.predict(reshaped)
+                    label=np.argmax(result, axis=1)[0]
+                    # prediction = model.predict(img_reshape).argmax()
+                    st.title("Predicted label for the image is {}".format(map_dict [label]))    
+                    st.text("")
 
+    if choice=="🙍 Information":
+
+        menu2 = ["Informative Plots", "FAQ's"] 
+        ch = st.selectbox("Select an option",menu2)
+        if ch=="Informative Plots":
+            menu3 = ["Calories","Protein","Fat","Saturated Fat","Fiber","Carbohydrates"] 
+            ch2 = st.selectbox("Select an option",menu3)
+            st.text("")
+            df=pd.read_csv("C:\\Users\\Anil\\Downloads\\User_Interface\\final_dataset.csv")
+            
+            if ch2 == "Calories":
+                df1 = df.sort_values('Actual_Calories',ascending = False)[0:20]
+                fig1=px.bar(df1,x='Food',y='Actual_Calories')
+                st.plotly_chart(fig1)
+            if ch2 == "Protein":
+                df2 = df.sort_values('Actual_Protein',ascending = False)[3:22]
+                fig2=px.bar(df2,x='Food',y='Actual_Protein')
+                st.plotly_chart(fig2)
+            if ch2 == "Fat":
+                df3 = df.sort_values('Actual_Fat',ascending = False)[9:20]
+                fig3=px.bar(df3,x='Food',y='Actual_Fat')
+                st.plotly_chart(fig3)
+            if ch2 == "Saturated Fat":
+                df4 = df.sort_values('Actual_Sat.Fat',ascending = False)[3:14]
+                fig4=px.bar(df4,x='Food',y='Actual_Sat.Fat')
+                st.plotly_chart(fig4)
+            if ch2 == "Fiber":
+                df5 = df.sort_values('Actual_Fiber',ascending = False)[3:14]
+                fig5=px.bar(df5,x='Food',y='Actual_Fiber')
+                st.plotly_chart(fig5)
+            if ch2 == "Carbohydrates":
+                df6 = df.sort_values('Actual_Carbs',ascending = False)[5:16]
+                fig6=px.bar(df6,x='Food',y='Actual_Carbs')
+                st.plotly_chart(fig6)
+
+        if ch=="FAQ's":
+
+            if st.button('Is there any connection between food and mood?'):
+                st.markdown('There have been many studies conducted which state that the food we eat influences our mental health.')
+            
+            if st.button('How do we use the recommendation system?'):
+                st.markdown("Select the Food option on the sidebar. Upload a photo of the customer, and based on the customer's mood & other details like customer allergies,etc ,few food items will be recommended for them.")
+            image_faq = Image.open("C:\\Users\\Anil\\Downloads\\User_Interface\\FAQ.jpg") 
+            st.image(image_faq,width=650)  
+            
+      
+
+        
