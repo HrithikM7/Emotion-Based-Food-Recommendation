@@ -28,6 +28,15 @@ streamlit_style = """
 
 st.markdown(streamlit_style, unsafe_allow_html=True)
 
+#Database
+
+conn = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    passwd="Ashri@2003",
+    database="pets"
+)
+
 #Authentication 
 
 names = ['Hrithik Maddirala', 'Gadaputi Ashritha']
@@ -160,6 +169,6 @@ if authentication_status :
             image_faq = Image.open("C:\\Users\\Anil\\Downloads\\User_Interface\\FAQ.jpg") 
             st.image(image_faq,width=650)  
             
-      
+conn.close()    
 
         
