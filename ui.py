@@ -16,6 +16,15 @@ from PIL import Image
 import pickle
 from pathlib import Path
 import streamlit_authenticator
+import mysql.connector
+
+#Database connection
+conn = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    passwd="Ashri@2003",
+    database="pets"
+)
 
 #Authentication 
 
@@ -102,4 +111,11 @@ if authentication_status :
                         # prediction = model.predict(img_reshape).argmax()
                         st.title("Predicted label for the image is {}".format(map_dict [label]))
                         st.text("")
+if choice == "🙍 Patient":
+    st.subheader("DATABASE")
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM mytable")
+    results = cursor.fetchall()
+    st.markdown(results)
+conn.close()
 
