@@ -2,20 +2,22 @@ import cv2
 import numpy as np
 import streamlit as st
 import tensorflow as tf
-import keras 
+#import keras 
 from tensorflow.keras.preprocessing import image
-from tensorflow.keras.utils import load_img,img_to_array,array_to_img
-from joblib import load
-import matplotlib.pyplot as plt
+#from tensorflow.keras.utils import load_img,img_to_array,array_to_img
+#from joblib import load
+#import matplotlib.pyplot as plt
 import plotly.express as px
 import pandas as pd
-from keras import backend as K
-import pywhatkit
-from datetime import datetime
+#from keras import backend as K
+#import pywhatkit
+#from datetime import datetime
 from PIL import Image
 import pickle
 from pathlib import Path
 import streamlit_authenticator
+import mysql.connector
+import random
 
 streamlit_style = """
             <style>
@@ -42,7 +44,7 @@ conn = mysql.connector.connect(
 names = ['Hrithik Maddirala', 'Gadaputi Ashritha']
 usernames = ['hrithikm2002' , 'gashritha']
 
-fp = Path("C:\\Users\\Anil\\Downloads\\User_Interface\\hashed_passwords.pkl")
+fp = Path("hashed_passwords.pkl")
 
 with fp.open("rb") as file : 
     hashed_passwords = pickle.load(file)
@@ -80,8 +82,8 @@ if authentication_status :
     if choice == "🏠 Home":
         st.subheader("THE NEW AGE FOOD RECOMMENDATION")
         st.markdown("Rather than going through the trouble of recommending customers what to order, what about using an emotion-based food recommendation app which will recommend customers food based on how they are feeling? Welcome to the one-stop website for all your food needs!")
-        image = Image.open('C:\\Users\\Anil\\Downloads\\User_Interface\\home_pic.jpg') 
-        st.image(image,width=600)
+        img = Image.open('home_pic.jpg') 
+        st.image(img,width=600)
 
     if choice == "🍞 Food":
         st.subheader("HELLO!")
@@ -90,14 +92,19 @@ if authentication_status :
         st.text("")
         if ch == "Emotion-based Food Recommendation":
             faceDetect=cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-            model = tf.keras.models.load_model("C:\\Users\\Anil\\Downloads\\User_Interface\\final_model_file.h5")
+            model = tf.keras.models.load_model("final_model_file.h5")
             ### load file
             uploaded_file = st.file_uploader("Choose an image file", type="jpg")
         
             map_dict = {0: 'Negative',
                     1: 'Neutral',
                     2: 'Positive'}
-
+            
+            cursor = conn.cursor()
+            cursor.execute(" insert into result_table(foodname,flavor) select name,flavor from food where not exists(select * from employee where employee.a1=food.ing1  union select * from employee where employee.a1=food.ing2 union select * from employee where employee.a1=food.ing3 union select * from employee where employee.a1=food.ing4);")
+            cursor.execute("select * from result_table")
+            results = cursor.fetchall()
+            
             if uploaded_file is not None:
             # Convert the file to an opencv image.
                 file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
@@ -113,14 +120,39 @@ if authentication_status :
                 if Generate_pred:
                     faces= faceDetect.detectMultiScale(gray, 1.3, 3)
                     x,y,w,h = faces[0]
+                    # for x,y,w,h in faces[0][0]:
                     sub_face_img=gray[y:y+h, x:x+w]
                     resized=cv2.resize(sub_face_img,(48,48))
                     normalize=resized/255.0
                     reshaped=np.reshape(normalize, (1, 48, 48, 1))
                     result=model.predict(reshaped)
                     label=np.argmax(result, axis=1)[0]
-                    st.title("Predicted label for the image is {}".format(map_dict [label]))    
+                    # prediction = model.predict(img_reshape).argmax()
+                    st.subheader("Predicted label for the image is {}".format(map_dict [label]))    
                     st.text("")
+                    if label==0:
+                       cursor.execute("select distinct foodname from result_table where flavor='Protein/Fiber'") 
+                       results1=cursor.fetchall()
+                       size = len(results1)
+                       var = random.randint(0,size-1)
+                       st.subheader(str(results1[var][0]))
+                    if label==1:
+                       cursor.execute("select distinct foodname from result_table where flavor='Cereals'") 
+                       results1=cursor.fetchall()
+                       size = len(results1)
+                       var = random.randint(0,size-1)  
+                       st.subheader(str(results1[var][0]))
+                    if label==2:
+                       cursor.execute("select distinct foodname from result_table where flavor='Fast foods' or flavor='sweets'") 
+                       results1=cursor.fetchall()
+                       size = len(results1)
+                       var = random.randint(0,size-1)
+                       st.subheader(str(results1[var][0]))
+                    #cursor = conn.cursor()
+                    #cursor.execute(" insert into result_table(foodname,flavor) select name,flavor from food where not exists(select * from employee where employee.a1=food.ing1  union select * from employee where employee.a1=food.ing2 union select * from employee where employee.a1=food.ing3 union select * from employee where employee.a1=food.ing4);")
+                    #cursor.execute("select * from result_table")
+                    #results = cursor.fetchall()
+                       #st.markdown(results1)
 
     if choice=="🙍 Information":
 
@@ -130,7 +162,7 @@ if authentication_status :
             menu3 = ["Calories","Protein","Fat","Saturated Fat","Fiber","Carbohydrates"] 
             ch2 = st.selectbox("Select an option",menu3)
             st.text("")
-            df=pd.read_csv("C:\\Users\\Anil\\Downloads\\User_Interface\\final_dataset.csv")
+            df=pd.read_csv("final_dataset.csv")
             
             if ch2 == "Calories":
                 df1 = df.sort_values('Actual_Calories',ascending = False)[0:20]
@@ -164,7 +196,7 @@ if authentication_status :
             
             if st.button('How do we use the recommendation system?'):
                 st.markdown("Select the Food option on the sidebar. Upload a photo of the customer, and based on the customer's mood & other details like customer allergies,etc ,few food items will be recommended for them.")
-            image_faq = Image.open("C:\\Users\\Anil\\Downloads\\User_Interface\\FAQ.jpg") 
+            image_faq = Image.open("FAQ.jpg") 
             st.image(image_faq,width=650)  
             
 conn.close()    
