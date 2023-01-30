@@ -113,7 +113,6 @@ if authentication_status :
                 if Generate_pred:
                     faces= faceDetect.detectMultiScale(gray, 1.3, 3)
                     x,y,w,h = faces[0]
-                    # for x,y,w,h in faces[0][0]:
                     sub_face_img=gray[y:y+h, x:x+w]
                     resized=cv2.resize(sub_face_img,(48,48))
                     normalize=resized/255.0
