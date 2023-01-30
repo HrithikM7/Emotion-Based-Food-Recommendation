@@ -119,7 +119,6 @@ if authentication_status :
                     reshaped=np.reshape(normalize, (1, 48, 48, 1))
                     result=model.predict(reshaped)
                     label=np.argmax(result, axis=1)[0]
-                    # prediction = model.predict(img_reshape).argmax()
                     st.title("Predicted label for the image is {}".format(map_dict [label]))    
                     st.text("")
 
